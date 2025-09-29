@@ -90,50 +90,50 @@ if selected == 'Személy':
   # tab1, tab2 = st.tabs(['Személy', 'Jármű'])
   # with tab1:
     
-  #try:
+  try:
       
-  if (Diagram == 'Vonal'):
-    fig = px.line(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58", markers = True, 
-                                title = "Személyforgalom ki- és belépő személyek vonaldiagramja")
-    st.plotly_chart(fig)
+    if (Diagram == 'Vonal'):
+      fig = px.line(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58", markers = True, 
+                                  title = "Személyforgalom ki- és belépő személyek vonaldiagramja")
+      st.plotly_chart(fig)
         
-  elif (Diagram == 'Pont'):
-    fig = px.scatter(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58",
-                                title = "Személyforgalom ki- és belépő személyek pontdiagramja")
-    st.plotly_chart(fig)
+    elif (Diagram == 'Pont'):
+      fig = px.scatter(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58",
+                                  title = "Személyforgalom ki- és belépő személyek pontdiagramja")
+      st.plotly_chart(fig)
         
-  elif (Diagram == 'Tableau'):
-    renderer = get_pyg_renderer()
-    renderer.explorer()
+    elif (Diagram == 'Tableau'):
+      renderer = get_pyg_renderer()
+      renderer.explorer()
         
-  elif (Diagram == 'Dekompozíció'):
-    SzemelyData = SzemelyData[(SzemelyData['MG05'] == Border)]
-    SzemelyData = SzemelyData[(SzemelyData.MG02.isin(Nationality))]
-    SzemelyData = SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])]
-    SzemelyData = SzemelyData.drop(columns = ['MG05', 'MG02'])
-    SzemelyData = SzemelyData.groupby(['DATE', 'MG58']).agg({'GADC041': 'sum'}).reset_index()
-    # print(SzemelyData.columns)
+    elif (Diagram == 'Dekompozíció'):
+      SzemelyData = SzemelyData[(SzemelyData['MG05'] == Border)]
+      SzemelyData = SzemelyData[(SzemelyData.MG02.isin(Nationality))]
+      SzemelyData = SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])]
+      SzemelyData = SzemelyData.drop(columns = ['MG05', 'MG02'])
+      SzemelyData = SzemelyData.groupby(['DATE', 'MG58']).agg({'GADC041': 'sum'}).reset_index()
+      # print(SzemelyData.columns)
       
-    tdi = pd.DatetimeIndex(SzemelyData['DATE']) # SzemelyData.DATE
-    SzemelyData.set_index(tdi, inplace = True)
-    SzemelyData.drop(columns = 'DATE', inplace = True)
-    SzemelyData.index.name = 'datetimeindex'
+      tdi = pd.DatetimeIndex(SzemelyData['DATE']) # SzemelyData.DATE
+      SzemelyData.set_index(tdi, inplace = True)
+      SzemelyData.drop(columns = 'DATE', inplace = True)
+      SzemelyData.index.name = 'datetimeindex'
       
-    SzemelyData = SzemelyData.pivot(columns = 'MG58', values = 'GADC041') # index = 'DATE', 
+      SzemelyData = SzemelyData.pivot(columns = 'MG58', values = 'GADC041') # index = 'DATE', 
   
-    SzemelyData = SzemelyData.explode(['Belépő', 'Kilépő']) 
+      SzemelyData = SzemelyData.explode(['Belépő', 'Kilépő']) 
       
-    if (Direction == 'Belépő'): 
-      res = sm.tsa.seasonal_decompose(SzemelyData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-      resplot = res.plot()
-      st.plotly_chart(resplot)
-    elif (Direction == 'Kilépő'):
-      res = sm.tsa.seasonal_decompose(SzemelyData['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-      resplot = res.plot()
-      st.plotly_chart(resplot)
+      if (Direction == 'Belépő'): 
+        res = sm.tsa.seasonal_decompose(SzemelyData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        resplot = res.plot()
+        st.plotly_chart(resplot)
+      elif (Direction == 'Kilépő'):
+        res = sm.tsa.seasonal_decompose(SzemelyData['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        resplot = res.plot()
+        st.plotly_chart(resplot)
         
-  # except:
-    # st.error('A diagram nem megjeleníthető az adott beállításokkal!')
+  except:
+    st.error('A diagram nem megjeleníthető az adott beállításokkal!')
 
 elif selected == 'Jármű': 
 
