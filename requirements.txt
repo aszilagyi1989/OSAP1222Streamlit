@@ -1,6 +1,6 @@
 pandas
 plotly.express
 pygwalker
-statsmodels.api
+statsmodels
 streamlit
 streamlit-option-menu
