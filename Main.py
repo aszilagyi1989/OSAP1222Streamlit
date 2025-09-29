@@ -122,6 +122,7 @@ if selected == 'Személy':
       SzemelyData = SzemelyData.pivot(columns = 'MG58', values = 'GADC041') # index = 'DATE', 
   
       SzemelyData = SzemelyData.explode(['Belépő', 'Kilépő']) 
+      SzemelyData.ffill(inplace = True) # fillna(method = 'ffill', 
       
       if (Direction == 'Belépő'): 
         res = sm.tsa.seasonal_decompose(SzemelyData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
@@ -198,6 +199,7 @@ elif selected == 'Jármű':
       JarmuData = JarmuData.pivot(columns = 'MG58', values = 'GADF201') # index = 'DATE', 
   
       JarmuData = JarmuData.explode(['Belépő', 'Kilépő']) 
+      JarmuData.ffill(inplace = True)
       
       if (Direction2 == 'Belépő'): 
         res = sm.tsa.seasonal_decompose(JarmuData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
