@@ -33,11 +33,6 @@ st.set_page_config(
                 'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza 2019-ig visszamenően azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 01-e óta.'}
   )
 
-with open('style.css') as f:
-    css = f.read()
-
-st.markdown(f'<style>{css}</style>', unsafe_allow_html = True)
-
 selected = option_menu(None, ['Személy', 'Jármű'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal')
 
 
