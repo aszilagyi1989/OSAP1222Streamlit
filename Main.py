@@ -135,7 +135,7 @@ elif selected == 'Jármű':
 
   with st.sidebar:
     
-    DateRange2 = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(2025, today.month - 1, 1)), min_value = datetime.date(2019, 1, 1), max_value = datetime.date(2025, today.month -1, 1), format = 'YYYY.MM.DD')
+    DateRange2 = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(today.year, today.month, 1)), min_value = datetime.date(2019, 1, 1), max_value = datetime.date(today.year, today.month, 1), format = 'YYYY.MM.DD')
   
     try:
       start_date2 = DateRange2[0]
