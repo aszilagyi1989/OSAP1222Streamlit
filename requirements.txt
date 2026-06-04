@@ -1,6 +1,6 @@
 matplotlib
 pandas
-plotly.express
+plotly
 pygwalker
 statsmodels
 streamlit==1.53.0

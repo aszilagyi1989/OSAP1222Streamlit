@@ -15,11 +15,9 @@ JarmuData['DATE'] = pd.to_datetime(JarmuData['TEV'].astype(str) + '/' + JarmuDat
 JarmuData = JarmuData.drop(columns = ['TEV', 'MHO'])
 
 
-# @st.cache_resource
 def get_pyg_renderer() -> "StreamlitRenderer":
     return StreamlitRenderer(SzemelyData[(SzemelyData['MG05'] == Border) & (SzemelyData['MG02'].isin(Nationality)) & (SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], spec = "./gw_config.json", spec_io_mode = "rw")
 
-# @st.cache_resource
 def get_pyg_renderer2() -> "StreamlitRenderer":
     return StreamlitRenderer(JarmuData[(JarmuData['MG05'] == Border2) & (JarmuData['MG64'].isin(Nationality2)) & (JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2)], spec = "./gw_config.json", spec_io_mode = "rw")
 
@@ -33,18 +31,9 @@ st.set_page_config(
                 'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza 2019-ig visszamenően azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 01-e óta.'}
   )
 
-selected = option_menu(None, ['Személy', 'Jármű'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal')
+selected = option_menu(None, ['Személy', 'Jármű'], icons = ['person-circle', 'ev-front'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal')
 
-
-# st.navigation([st.Page("Szemely.py", title = "Személyforgalom"),
-#                st.Page("Jarmu.py", title = "Járműforgalom")
-#                ])
-
-# st.subheader('Személy- és járműforgalmi jelentés - OSAP 1222')
 today = datetime.datetime.now()
-
-#user_info = st.user
-# st.write(f"User: {user_info}")
 
 if selected == 'Személy': 
 
@@ -81,9 +70,6 @@ if selected == 'Személy':
     
     if (Diagram == 'Dekompozíció'): 
       Direction = st.selectbox('Irány', ['Belépő', 'Kilépő'])
-  
-  # tab1, tab2 = st.tabs(['Személy', 'Jármű'])
-  # with tab1:
     
   try:
       
@@ -98,6 +84,8 @@ if selected == 'Személy':
       st.plotly_chart(fig)
         
     elif (Diagram == 'Tableau'):
+      # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
+      # st.dataframe(SzemelyData)
       renderer = get_pyg_renderer()
       renderer.explorer()
         
@@ -175,6 +163,8 @@ elif selected == 'Jármű':
       st.plotly_chart(fig)
       
     elif (Diagram2 == 'Tableau'):
+      # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
+      # st.dataframe(JarmuData)
       renderer = get_pyg_renderer2()
       renderer.explorer()
       
@@ -207,5 +197,3 @@ elif selected == 'Jármű':
         
   except:
     st.error('A diagram nem megjeleníthető az adott beállításokkal!')
-  # with tab2:
-  #   ""
