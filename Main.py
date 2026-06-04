@@ -31,7 +31,21 @@ st.set_page_config(
                 'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza 2019-ig visszamenően azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 01-e óta.'}
   )
 
-selected = option_menu(None, ['Személy', 'Jármű'], icons = ['person-circle', 'ev-front'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal')
+selected = option_menu(None, ['Személy', 'Jármű'], icons = ['person-circle', 'ev-front'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal', 
+  styles = {"container": {"padding": "0!important", "background-color": "#f0f2f6"},
+        "icon": {"color": "#ff4b4b", "font-size": "25px"}, # Az ikonok színe (pl. pirosas)
+        "nav-link": {
+            "font-size": "18px", 
+            "text-align": "center", 
+            "margin": "5px", 
+            "--hover-color": "#dee2e6"
+        },
+        "nav-link-selected": {
+            "background-color": "#003366", # A kiválasztott gomb háttere (KSH sötétkék)
+            "color": "white",              # A szöveg színe a kijelölt gombon
+            "font-weight": "bold"
+        },
+      })
 
 today = datetime.datetime.now()
 
