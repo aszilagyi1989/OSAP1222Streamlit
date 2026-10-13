@@ -78,7 +78,7 @@ if selected == 'Személy':
 
   with st.sidebar:
     
-    DateRange = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(today.year, today.month, 1)), min_value = datetime.date(2019, 1, 1), max_value = datetime.date(today.year, today.month, 1), format = 'YYYY.MM.DD')
+    DateRange = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(today.year, today.month, 1)), min_value = datetime.date(1998, 1, 1), max_value = datetime.date(today.year, today.month, 1), format = 'YYYY.MM.DD')
     
     try:
       start_date = DateRange[0]
@@ -198,7 +198,7 @@ elif selected == 'Jármű':
 
   with st.sidebar:
     
-    DateRange2 = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(today.year, today.month, 1)), min_value = datetime.date(2019, 1, 1), max_value = datetime.date(today.year, today.month, 1), format = 'YYYY.MM.DD')
+    DateRange2 = st.date_input(label = 'Időszak kiválasztása', value = (datetime.date(2019, 1, 1), datetime.date(today.year, today.month, 1)), min_value = datetime.date(2004, 1, 1), max_value = datetime.date(today.year, today.month, 1), format = 'YYYY.MM.DD')
   
     try:
       start_date2 = DateRange2[0]
