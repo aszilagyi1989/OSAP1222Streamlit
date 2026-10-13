@@ -18,13 +18,13 @@ def get_databricks_connection():
 def load_databricks_SzemelyData():
   conn = get_databricks_connection()
   cursor = conn.cursor()
-  cursor.execute("select * from GA.SZEMELY_FORGALOM")
+  cursor.execute("select to_date(concat_ws('/', cast(TEV as string), cast(MHO as string), '01'), 'yyyy/M/d') as DATE, MG05, MG02, MG58, GADC041 from GA.SZEMELY_FORGALOM") 
   Szemely = cursor.fetchall_arrow().to_pandas()
   
   cursor.close()
   
-  Szemely['DATE'] = pd.to_datetime(Szemely['TEV'].astype(str) + '/' + Szemely['MHO'].astype(str) + '/01').dt.date
-  Szemely = Szemely.drop(columns = ['TEV', 'MHO'])
+  # Szemely['DATE'] = pd.to_datetime(Szemely['TEV'].astype(str) + '/' + Szemely['MHO'].astype(str) + '/01').dt.date
+  # Szemely = Szemely.drop(columns = ['TEV', 'MHO'])
   
   return Szemely
 
@@ -32,20 +32,17 @@ def load_databricks_SzemelyData():
 def load_databricks_JarmuData():
   conn = get_databricks_connection()
   cursor = conn.cursor()
-  cursor.execute("select * from GA.JARMU_FORGALOM")
+  cursor.execute("select to_date(concat_ws('/', cast(TEV as string), cast(MHO as string), '01'), 'yyyy/M/d') as DATE, MG58, MG64, MG05, MG60, GADF201 from GA.JARMU_FORGALOM") 
   Jarmu = cursor.fetchall_arrow().to_pandas()
   
   cursor.close()
   conn.close()
   
-  Jarmu['DATE'] = pd.to_datetime(Jarmu['TEV'].astype(str) + '/' + Jarmu['MHO'].astype(str) + '/01').dt.date
-  Jarmu = Jarmu.drop(columns = ['TEV', 'MHO'])
+  # Jarmu['DATE'] = pd.to_datetime(Jarmu['TEV'].astype(str) + '/' + Jarmu['MHO'].astype(str) + '/01').dt.date
+  # Jarmu = Jarmu.drop(columns = ['TEV', 'MHO'])
   
   return Jarmu
 
-
-SzemelyData = load_databricks_SzemelyData()
-JarmuData = load_databricks_JarmuData()
 
 st.set_page_config(
   layout = 'wide',
@@ -75,6 +72,8 @@ selected = option_menu(None, ['Személy', 'Jármű'], icons = ['person-circle', 
 today = datetime.datetime.now()
 
 if selected == 'Személy': 
+  
+  SzemelyData = load_databricks_SzemelyData()
 
   with st.sidebar:
     
@@ -195,6 +194,8 @@ if selected == 'Személy':
     st.error(f"A diagram nem megjeleníthető az adott beállításokkal! A hiba oka: {e}")
 
 elif selected == 'Jármű': 
+  
+  JarmuData = load_databricks_JarmuData()
 
   with st.sidebar:
     
