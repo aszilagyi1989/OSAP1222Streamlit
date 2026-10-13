@@ -4,3 +4,5 @@
 .Ruserdata
 *.Rproj
 *.json
+.env
+.streamlit/secrets.toml

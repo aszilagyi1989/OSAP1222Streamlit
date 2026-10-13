@@ -1,26 +1,61 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
+from databricks import sql
 import pandas as pd
 import datetime
 import plotly.express as px
-from pygwalker.api.streamlit import StreamlitRenderer
+# from pygwalker.api.streamlit import StreamlitRenderer
 import statsmodels.api as sm
 
-SzemelyData = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Szemely.csv', sep = ';')
-SzemelyData['DATE'] = pd.to_datetime(SzemelyData['TEV'].astype(str) + '/' + SzemelyData['MHO'].astype(str) + '/01').dt.date
-SzemelyData = SzemelyData.drop(columns = ['TEV', 'MHO'])
+@st.cache_resource
+def get_databricks_connection():
+  return sql.connect(
+  server_hostname = st.secrets["DATABRICKS_SERVER_HOSTNAME"], 
+  http_path = st.secrets["DATABRICKS_HTTP_PATH"], 
+  access_token = st.secrets["DATABRICKS_TOKEN"]
+  )
+  
+@st.cache_data
+def load_databricks_SzemelyData():
+  conn = get_databricks_connection()
+  cursor = conn.cursor()
+  cursor.execute("select * from GA.SZEMELY_FORGALOM")
+  Szemely = cursor.fetchall_arrow().to_pandas()
+  
+  cursor.close()
+  # conn.close()
+  
+  # Szemely = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Szemely.csv', sep = ';')
+  Szemely['DATE'] = pd.to_datetime(Szemely['TEV'].astype(str) + '/' + Szemely['MHO'].astype(str) + '/01').dt.date
+  Szemely = Szemely.drop(columns = ['TEV', 'MHO'])
+  
+  return Szemely
 
-JarmuData = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Jarmu.csv', sep = ';')
-JarmuData['DATE'] = pd.to_datetime(JarmuData['TEV'].astype(str) + '/' + JarmuData['MHO'].astype(str) + '/01').dt.date
-JarmuData = JarmuData.drop(columns = ['TEV', 'MHO'])
+@st.cache_data
+def load_databricks_JarmuData():
+  conn = get_databricks_connection()
+  cursor = conn.cursor()
+  cursor.execute("select * from GA.JARMU_FORGALOM")
+  Jarmu = cursor.fetchall_arrow().to_pandas()
+  
+  cursor.close()
+  conn.close()
+  
+  # Jarmu = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Jarmu.csv', sep = ';')
+  Jarmu['DATE'] = pd.to_datetime(Jarmu['TEV'].astype(str) + '/' + Jarmu['MHO'].astype(str) + '/01').dt.date
+  Jarmu = Jarmu.drop(columns = ['TEV', 'MHO'])
+  
+  return Jarmu
 
 
-def get_pyg_renderer() -> "StreamlitRenderer":
-    return StreamlitRenderer(SzemelyData[(SzemelyData['MG05'] == Border) & (SzemelyData['MG02'].isin(Nationality)) & (SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], spec = "./gw_config.json", spec_io_mode = "rw")
+# def get_pyg_renderer() -> "StreamlitRenderer":
+#     return StreamlitRenderer(SzemelyData[(SzemelyData['MG05'] == Border) & (SzemelyData['MG02'].isin(Nationality)) & (SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], spec = "./gw_config.json", spec_io_mode = "rw")
+# 
+# def get_pyg_renderer2() -> "StreamlitRenderer":
+#     return StreamlitRenderer(JarmuData[(JarmuData['MG05'] == Border2) & (JarmuData['MG64'].isin(Nationality2)) & (JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2)], spec = "./gw_config.json", spec_io_mode = "rw")
 
-def get_pyg_renderer2() -> "StreamlitRenderer":
-    return StreamlitRenderer(JarmuData[(JarmuData['MG05'] == Border2) & (JarmuData['MG64'].isin(Nationality2)) & (JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2)], spec = "./gw_config.json", spec_io_mode = "rw")
-
+SzemelyData = load_databricks_SzemelyData()
+JarmuData = load_databricks_JarmuData()
 
 st.set_page_config(
   layout = 'wide',
@@ -80,7 +115,7 @@ if selected == 'Személy':
     except:
       st.error('Nem lehet állampolgárságot kiválasztani az oldalszárnyon megadott beállításokkal!')
     
-    Diagram = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Tableau', 'Dekompozíció'])
+    Diagram = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Dekompozíció']) # 'Tableau', 
     
     if (Diagram == 'Dekompozíció'): 
       Direction = st.selectbox('Irány', ['Belépő', 'Kilépő'])
@@ -97,11 +132,11 @@ if selected == 'Személy':
                                   title = "Személyforgalom ki- és belépő személyek pontdiagramja")
       st.plotly_chart(fig)
         
-    elif (Diagram == 'Tableau'):
-      # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
-      # st.dataframe(SzemelyData)
-      renderer = get_pyg_renderer()
-      renderer.explorer()
+    # elif (Diagram == 'Tableau'):
+    #   # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
+    #   # st.dataframe(SzemelyData)
+    #   renderer = get_pyg_renderer()
+    #   renderer.explorer()
         
     elif (Diagram == 'Dekompozíció'):
       SzemelyData = SzemelyData[(SzemelyData['MG05'] == Border)]
@@ -159,7 +194,7 @@ elif selected == 'Jármű':
     except:
       st.error('Nem lehet honosságot kiválasztani az oldalszárnyon megadott beállításokkal!')
       
-    Diagram2 = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Tableau', 'Dekompozíció'])
+    Diagram2 = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Dekompozíció']) # 'Tableau',
     
     if (Diagram2 == 'Dekompozíció'): 
       Direction2 = st.selectbox('Irány', ['Belépő', 'Kilépő'])
@@ -176,11 +211,11 @@ elif selected == 'Jármű':
                                   title = "Járműforgalom hazai és külföldi járművek eloszlása a határátkelés folyamán pontdiagramja")
       st.plotly_chart(fig)
       
-    elif (Diagram2 == 'Tableau'):
-      # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
-      # st.dataframe(JarmuData)
-      renderer = get_pyg_renderer2()
-      renderer.explorer()
+    # elif (Diagram2 == 'Tableau'):
+    #   # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
+    #   # st.dataframe(JarmuData)
+    #   renderer = get_pyg_renderer2()
+    #   renderer.explorer()
       
     elif (Diagram2 == 'Dekompozíció'):
       JarmuData = JarmuData[(JarmuData['MG05'] == Border2)]
