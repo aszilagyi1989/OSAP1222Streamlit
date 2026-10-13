@@ -4,7 +4,6 @@ from databricks import sql
 import pandas as pd
 import datetime
 import plotly.express as px
-# from pygwalker.api.streamlit import StreamlitRenderer
 import statsmodels.api as sm
 
 @st.cache_resource
@@ -23,9 +22,7 @@ def load_databricks_SzemelyData():
   Szemely = cursor.fetchall_arrow().to_pandas()
   
   cursor.close()
-  # conn.close()
   
-  # Szemely = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Szemely.csv', sep = ';')
   Szemely['DATE'] = pd.to_datetime(Szemely['TEV'].astype(str) + '/' + Szemely['MHO'].astype(str) + '/01').dt.date
   Szemely = Szemely.drop(columns = ['TEV', 'MHO'])
   
@@ -41,18 +38,11 @@ def load_databricks_JarmuData():
   cursor.close()
   conn.close()
   
-  # Jarmu = pd.read_csv('https://raw.githubusercontent.com/aszilagyi1989/Shiny_CSV/refs/heads/main/OSAP1222_Jarmu.csv', sep = ';')
   Jarmu['DATE'] = pd.to_datetime(Jarmu['TEV'].astype(str) + '/' + Jarmu['MHO'].astype(str) + '/01').dt.date
   Jarmu = Jarmu.drop(columns = ['TEV', 'MHO'])
   
   return Jarmu
 
-
-# def get_pyg_renderer() -> "StreamlitRenderer":
-#     return StreamlitRenderer(SzemelyData[(SzemelyData['MG05'] == Border) & (SzemelyData['MG02'].isin(Nationality)) & (SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], spec = "./gw_config.json", spec_io_mode = "rw")
-# 
-# def get_pyg_renderer2() -> "StreamlitRenderer":
-#     return StreamlitRenderer(JarmuData[(JarmuData['MG05'] == Border2) & (JarmuData['MG64'].isin(Nationality2)) & (JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2)], spec = "./gw_config.json", spec_io_mode = "rw")
 
 SzemelyData = load_databricks_SzemelyData()
 JarmuData = load_databricks_JarmuData()
@@ -61,8 +51,8 @@ st.set_page_config(
   layout = 'wide',
   page_title = 'OSAP 1222 - Személy- és járműforgalmi jelentés',
   page_icon = 'https://map.ksh.hu/timea/images/shortcut.ico',
-  menu_items = {'Get help': 'mailto:adam.szilagyi@ksh.hu',
-                'Report a bug': 'mailto:adam.szilagyi@ksh.hu',
+  menu_items = {'Get help': 'mailto:sz.adam1989@gmail.com',
+                'Report a bug': 'mailto:sz.adam1989i@gmail.com',
                 'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza 2019-ig visszamenően azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 01-e óta.'}
   )
 
@@ -115,58 +105,94 @@ if selected == 'Személy':
     except:
       st.error('Nem lehet állampolgárságot kiválasztani az oldalszárnyon megadott beállításokkal!')
     
-    Diagram = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Dekompozíció']) # 'Tableau', 
+    Diagram = st.selectbox('Diagramtípus', ['Vonal', 'Pont', 'Dekompozíció']) 
     
     if (Diagram == 'Dekompozíció'): 
       Direction = st.selectbox('Irány', ['Belépő', 'Kilépő'])
     
   try:
       
+    Szemely_Szurt = SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])]
+    
+    if (Diagram != 'Dekompozíció'):
+      belepo_data = Szemely_Szurt[Szemely_Szurt['MG58'] == "Belépő"]
+      kilepo_data = Szemely_Szurt[Szemely_Szurt['MG58'] == "Kilépő"]
+      
+      kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+      with kpi1:
+        st.metric("Összesített forgalom (fő)", f"{int(Szemely_Szurt['GADC041'].sum()):,}".replace(",", " "))
+      with kpi2:
+        max_belepo_row = belepo_data.loc[belepo_data['GADC041'].idxmax()] if not belepo_data.empty else None
+        st.metric("Max Belépő forgalom", f"{int(max_belepo_row['GADC041']):,}".replace(",", " ") if max_belepo_row is not None else "0", help=f"Dátum: {max_belepo_row['DATE']}" if max_belepo_row is not None else "")
+      
+      with kpi3:
+        max_kilepo_row = kilepo_data.loc[kilepo_data['GADC041'].idxmax()] if not kilepo_data.empty else None
+        st.metric("Max Kilépő forgalom", f"{int(max_kilepo_row['GADC041']):,}".replace(",", " ") if max_kilepo_row is not None else "0", help=f"Dátum: {max_kilepo_row['DATE']}" if max_kilepo_row is not None else "")
+      
+      with kpi4:
+        st.metric("Átlag Belépő (havi)", f"{int(belepo_data['GADC041'].mean()):,}".replace(",", " ") if not belepo_data.empty else "0")
+      
+      with kpi5:
+        st.metric("Átlag Kilépő (havi)", f"{int(kilepo_data['GADC041'].mean()):,}".replace(",", " ") if not kilepo_data.empty else "0")
+    
     if (Diagram == 'Vonal'):
-      fig = px.line(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58", markers = True, 
-                                  title = "Személyforgalom ki- és belépő személyek vonaldiagramja")
+      fig = px.line(Szemely_Szurt, x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58", markers = True, 
+      title = "Személyforgalom ki- és belépő személyek vonaldiagramja")
       st.plotly_chart(fig)
         
     elif (Diagram == 'Pont'):
-      fig = px.scatter(SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['MG05'] == Border) & (SzemelyData.MG02.isin(Nationality)) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])], x = "DATE", y = "GADC041", color = "MG02", facet_row = "MG58",
-                                  title = "Személyforgalom ki- és belépő személyek pontdiagramja")
+      plot_df = Szemely_Szurt.copy()
+      # Python date-ből pandas datetime64-et csinálunk, amit a trendline már megért
+      plot_df['DATE_PLOT'] = pd.to_datetime(plot_df['DATE'])
+      fig = px.scatter(plot_df, x = "DATE_PLOT", y = "GADC041", color = "MG02", facet_row = "MG58", trendline = "ols", # trendline = "rolling", trendline_options = dict(window = 3), 
+      title = "Személyforgalom ki- és belépő személyek pontdiagramja")
+      fig.update_xaxes(title_text = "DATE") # Visszaírjuk a tengely feliratát szépre
       st.plotly_chart(fig)
         
-    # elif (Diagram == 'Tableau'):
-    #   # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
-    #   # st.dataframe(SzemelyData)
-    #   renderer = get_pyg_renderer()
-    #   renderer.explorer()
-        
     elif (Diagram == 'Dekompozíció'):
-      SzemelyData = SzemelyData[(SzemelyData['MG05'] == Border)]
-      SzemelyData = SzemelyData[(SzemelyData.MG02.isin(Nationality))]
-      SzemelyData = SzemelyData[(SzemelyData['DATE'] >= start_date) & (SzemelyData['DATE'] <= end_date) & (SzemelyData['GADC041'] >= filter[0]) & (SzemelyData['GADC041'] <= filter[1])]
-      SzemelyData = SzemelyData.drop(columns = ['MG05', 'MG02'])
-      SzemelyData = SzemelyData.groupby(['DATE', 'MG58']).agg({'GADC041': 'sum'}).reset_index()
-      # print(SzemelyData.columns)
+      Szemely = SzemelyData[(SzemelyData['MG05'] == Border)]
+      Szemely = Szemely[(Szemely.MG02.isin(Nationality))]
+      Szemely = Szemely[(Szemely['DATE'] >= start_date) & (Szemely['DATE'] <= end_date) & (Szemely['GADC041'] >= filter[0]) & (Szemely['GADC041'] <= filter[1])]
+      Szemely = Szemely.drop(columns = ['MG05', 'MG02'])
+      Szemely = Szemely.groupby(['DATE', 'MG58']).agg({'GADC041': 'sum'}).reset_index()
       
-      tdi = pd.DatetimeIndex(SzemelyData['DATE']) # SzemelyData.DATE
-      SzemelyData.set_index(tdi, inplace = True)
-      SzemelyData.drop(columns = 'DATE', inplace = True)
-      SzemelyData.index.name = 'datetimeindex'
+      tdi = pd.DatetimeIndex(Szemely['DATE'])
+      Szemely.set_index(tdi, inplace = True)
+      Szemely.drop(columns = 'DATE', inplace = True)
+      Szemely.index.name = 'datetimeindex'
       
-      SzemelyData = SzemelyData.pivot(columns = 'MG58', values = 'GADC041') # index = 'DATE', 
+      Szemely = Szemely.pivot(columns = 'MG58', values = 'GADC041')
   
-      SzemelyData = SzemelyData.explode(['Belépő', 'Kilépő']) 
-      SzemelyData.ffill(inplace = True) # fillna(method = 'ffill', 
+      Szemely = Szemely.explode(['Belépő', 'Kilépő']) 
+      Szemely.ffill(inplace = True)
+      Szemely.bfill(inplace = True)
+      
+      # Beállítjuk a havi frekvenciát ('MS' = Month Start), a hiányzó hónapokat pedig 0-val töltjük fel
+      # Szemely = Szemely.asfreq('MS', fill_value = 0)
+      
+      # ELLENŐRZÉS
+      if len(Szemely) < 24:
+        st.warning(f"A kiválasztott határátkelőhöz csak {len(Szemely)} hónapnyi adat érhető el. A dekompozícióhoz legalább 24 hónap szükséges!")
       
       if (Direction == 'Belépő'): 
-        res = sm.tsa.seasonal_decompose(SzemelyData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-        resplot = res.plot()
-        st.plotly_chart(resplot)
+        res = sm.tsa.seasonal_decompose(Szemely['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        fig = res.plot()
+        st.plotly_chart(fig)
       elif (Direction == 'Kilépő'):
-        res = sm.tsa.seasonal_decompose(SzemelyData['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-        resplot = res.plot()
-        st.plotly_chart(resplot)
+        res = sm.tsa.seasonal_decompose(Szemely['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        fig = res.plot()
+        st.plotly_chart(fig)
         
-  except:
-    st.error('A diagram nem megjeleníthető az adott beállításokkal!')
+    if (Diagram != 'Dekompozíció'):
+      st.download_button(
+        label = "📥 Szűrt adatok letöltése CSV formátumban",
+        data = Szemely_Szurt.to_csv(index = False, sep = ';').encode('utf-8-sig'),
+        file_name = f"OSAP1222_Szemely_szurt_{Border}_{datetime.date.today()}.csv",
+        mime = "text/csv"
+      )
+
+  except Exception as e:
+    st.error(f"A diagram nem megjeleníthető az adott beállításokkal! A hiba oka: {e}")
 
 elif selected == 'Jármű': 
 
@@ -200,49 +226,85 @@ elif selected == 'Jármű':
       Direction2 = st.selectbox('Irány', ['Belépő', 'Kilépő'])
   
   try:
+    
+    Jarmu_Szurt = JarmuData[(JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2) & (JarmuData['MG05'] == Border2) & (JarmuData.MG64.isin(Nationality2))]
+    
+    if (Diagram2 != 'Dekompozíció'):
+      belepo_data = Jarmu_Szurt[Jarmu_Szurt['MG58'] == "Belépő"]
+      kilepo_data = Jarmu_Szurt[Jarmu_Szurt['MG58'] == "Kilépő"]
       
+      kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+      with kpi1:
+        st.metric("Összesített forgalom (fő)", f"{int(Jarmu_Szurt['GADF201'].sum()):,}".replace(",", " "))
+      with kpi2:
+        max_belepo_row = belepo_data.loc[belepo_data['GADF201'].idxmax()] if not belepo_data.empty else None
+        st.metric("Max Belépő forgalom", f"{int(max_belepo_row['GADF201']):,}".replace(",", " ") if max_belepo_row is not None else "0", help=f"Dátum: {max_belepo_row['DATE']}" if max_belepo_row is not None else "")
+      
+      with kpi3:
+        max_kilepo_row = kilepo_data.loc[kilepo_data['GADF201'].idxmax()] if not kilepo_data.empty else None
+        st.metric("Max Kilépő forgalom", f"{int(max_kilepo_row['GADF201']):,}".replace(",", " ") if max_kilepo_row is not None else "0", help=f"Dátum: {max_kilepo_row['DATE']}" if max_kilepo_row is not None else "")
+      
+      with kpi4:
+        st.metric("Átlag Belépő (havi)", f"{int(belepo_data['GADF201'].mean()):,}".replace(",", " ") if not belepo_data.empty else "0")
+      
+      with kpi5:
+        st.metric("Átlag Kilépő (havi)", f"{int(kilepo_data['GADF201'].mean()):,}".replace(",", " ") if not kilepo_data.empty else "0")
+    
     if (Diagram2 == 'Vonal'):
-      fig = px.line(JarmuData[(JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2) & (JarmuData['MG05'] == Border2) & (JarmuData.MG64.isin(Nationality2))], x = 'DATE', y = 'GADF201', color = 'MG64', facet_row = 'MG58', facet_col = 'MG60', markers = True, 
-                                  title = "Járműforgalom hazai és külföldi járművek eloszlása a határátkelés folyamán vonaldiagramja")
+      fig = px.line(Jarmu_Szurt, x = 'DATE', y = 'GADF201', color = 'MG64', facet_row = 'MG58', facet_col = 'MG60', markers = True, 
+      title = "Járműforgalom hazai és külföldi járművek eloszlása a határátkelés folyamán vonaldiagramja")
       st.plotly_chart(fig)
       
     elif (Diagram2 == 'Pont'):
-      fig = px.scatter(JarmuData[(JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2) & (JarmuData['MG05'] == Border2) & (JarmuData.MG64.isin(Nationality2))], x = 'DATE', y = 'GADF201', color = 'MG64', facet_row = 'MG58', facet_col = 'MG60', 
-                                  title = "Járműforgalom hazai és külföldi járművek eloszlása a határátkelés folyamán pontdiagramja")
+      plot_df = Jarmu_Szurt.copy()
+      # Python date-ből pandas datetime64-et csinálunk, amit a trendline már megért
+      plot_df['DATE_PLOT'] = pd.to_datetime(plot_df['DATE'])
+      fig = px.scatter(plot_df, x = 'DATE_PLOT', y = 'GADF201', color = 'MG64', facet_row = 'MG58', facet_col = 'MG60', trendline = "ols", # trendline = "rolling", trendline_options = dict(window = 3),
+      title = "Járműforgalom hazai és külföldi járművek eloszlása a határátkelés folyamán pontdiagramja")
+      fig.update_xaxes(title_text = "DATE") # Visszaírjuk a tengely feliratát szépre
       st.plotly_chart(fig)
       
-    # elif (Diagram2 == 'Tableau'):
-    #   # st.write("A Tableau nézet jelenleg nem elérhető ezen a Streamlit verzión.")
-    #   # st.dataframe(JarmuData)
-    #   renderer = get_pyg_renderer2()
-    #   renderer.explorer()
-      
     elif (Diagram2 == 'Dekompozíció'):
-      JarmuData = JarmuData[(JarmuData['MG05'] == Border2)]
-      JarmuData = JarmuData[(JarmuData.MG64.isin(Nationality2))]
-      JarmuData = JarmuData[(JarmuData['DATE'] >= start_date2) & (JarmuData['DATE'] <= end_date2)]
-      JarmuData = JarmuData.drop(columns = ['MG05', 'MG64'])
-      JarmuData = JarmuData.groupby(['DATE', 'MG58']).agg({'GADF201': 'sum'}).reset_index()
-      # print(JarmuData.columns)
+      Jarmu = JarmuData[(JarmuData['MG05'] == Border2)]
+      Jarmu = Jarmu[(Jarmu.MG64.isin(Nationality2))]
+      Jarmu = Jarmu[(Jarmu['DATE'] >= start_date2) & (Jarmu['DATE'] <= end_date2)]
+      Jarmu = Jarmu.drop(columns = ['MG05', 'MG64'])
+      Jarmu = Jarmu.groupby(['DATE', 'MG58']).agg({'GADF201': 'sum'}).reset_index()
       
-      tdi = pd.DatetimeIndex(JarmuData['DATE']) # SzemelyData.DATE
-      JarmuData.set_index(tdi, inplace = True)
-      JarmuData.drop(columns = 'DATE', inplace = True)
-      JarmuData.index.name = 'datetimeindex'
+      tdi = pd.DatetimeIndex(Jarmu['DATE']) # SzemelyData.DATE
+      Jarmu.set_index(tdi, inplace = True)
+      Jarmu.drop(columns = 'DATE', inplace = True)
+      Jarmu.index.name = 'datetimeindex'
       
-      JarmuData = JarmuData.pivot(columns = 'MG58', values = 'GADF201') # index = 'DATE', 
+      Jarmu = Jarmu.pivot(columns = 'MG58', values = 'GADF201') # index = 'DATE', 
   
-      JarmuData = JarmuData.explode(['Belépő', 'Kilépő']) 
-      JarmuData.ffill(inplace = True)
+      Jarmu = Jarmu.explode(['Belépő', 'Kilépő']) 
+      Jarmu.ffill(inplace = True)
+      Jarmu.bfill(inplace = True)
+      
+      # Beállítjuk a havi frekvenciát ('MS' = Month Start), a hiányzó hónapokat pedig 0-val töltjük fel
+      # Jarmu = Jarmu.asfreq('MS', fill_value = 0)
+      
+      # ELLENŐRZÉS
+      if len(Jarmu) < 24:
+        st.warning(f"A kiválasztott határátkelőhöz csak {len(Jarmu)} hónapnyi adat érhető el. A dekompozícióhoz legalább 24 hónap szükséges!")
       
       if (Direction2 == 'Belépő'): 
-        res = sm.tsa.seasonal_decompose(JarmuData['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-        resplot = res.plot()
-        st.plotly_chart(resplot)
+        res = sm.tsa.seasonal_decompose(Jarmu['Belépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        fig = res.plot()
+        st.plotly_chart(fig)
       elif (Direction2 == 'Kilépő'):
-        res = sm.tsa.seasonal_decompose(JarmuData['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
-        resplot = res.plot()
-        st.plotly_chart(resplot)
-        
-  except:
-    st.error('A diagram nem megjeleníthető az adott beállításokkal!')
+        res = sm.tsa.seasonal_decompose(Jarmu['Kilépő'], model = 'additive', period = 12) # multiplicative , 'Kilépő'
+        fig = res.plot()
+        st.plotly_chart(fig)
+    
+    if (Diagram2 != 'Dekompozíció'):
+      st.download_button(
+        label = "📥 Szűrt adatok letöltése CSV formátumban",
+        data = Jarmu_Szurt.to_csv(index = False, sep = ';').encode('utf-8-sig'),
+        file_name = f"OSAP1222_Jarmu_szurt_{Border2}_{datetime.date.today()}.csv",
+        mime = "text/csv"
+      )
+      
+  except Exception as e:
+    st.error(f"A diagram nem megjeleníthető az adott beállításokkal! A hiba oka: {e}")
