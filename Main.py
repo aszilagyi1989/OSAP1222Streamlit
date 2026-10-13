@@ -53,7 +53,7 @@ st.set_page_config(
   page_icon = 'https://map.ksh.hu/timea/images/shortcut.ico',
   menu_items = {'Get help': 'mailto:sz.adam1989@gmail.com',
                 'Report a bug': 'mailto:sz.adam1989i@gmail.com',
-                'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza 2019-ig visszamenően azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 01-e óta.'}
+                'About': 'Ez a webalkalmazás az 1222-es OSAP számú adatgyűjtés adatait tartalmazza azon határátkelőhelyekre, amelyek nincsenek benne a Schengeni övezetben 2025. január 1-e óta.'}
   )
 
 selected = option_menu(None, ['Személy', 'Jármű'], icons = ['person-circle', 'ev-front'], menu_icon = 'cast', default_index = 0, orientation = 'horizontal', 
